@@ -71,8 +71,7 @@ class Layer:
 
     @staticmethod
     def derivative_sigmoid(x):
-        result = np.multiply(x, 1.0 - x)
-        return result
+        return np.multiply(x, 1.0 - x)
 
     @staticmethod
     def relu(x):
