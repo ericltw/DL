@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def parseArguments():
+def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_type')
     parser.add_argument('--activation_function', default='sigmoid')
@@ -52,7 +52,7 @@ def generate_data(data_type):
 
 
 class Layer:
-    def initWeight(self):
+    def init_weight(self):
         return np.random.uniform(0, 1, (self.num_of_neurals, self.num_of_next_layer_neurals))
 
     def __init__(self, num_of_neurals, num_of_next_layer_neurals, activation_function, learning_rate):
@@ -60,7 +60,7 @@ class Layer:
         self.num_of_next_layer_neurals = num_of_next_layer_neurals
         self.activation_function = activation_function
         self.learning_rate = learning_rate
-        self.weight = self.initWeight()
+        self.weight = self.init_weight()
         self.forward_output = []
         self.forward_gradient = []
         self.backward_gradient = []
@@ -113,7 +113,7 @@ class Layer:
 
 
 class NNetwork:
-    def initLayers(self):
+    def init_layers(self):
         # Init input layers.
         layers = [Layer(self.num_of_input_neurals, self.num_of_hidden_neurals, self.activation_function,
                         self.learning_rate)]
@@ -143,12 +143,12 @@ class NNetwork:
         self.num_of_output_neurals = num_of_output_neurals
         self.epoch = epoch
 
-        self.layers = self.initLayers()
+        self.layers = self.init_layers()
         self.predict = []
         self.losses = []
 
     @staticmethod
-    def computeError(x1, x2):
+    def compute_error(x1, x2):
         return x1 - x2
 
     def forward(self):
@@ -194,8 +194,8 @@ class NNetwork:
 
         for i in range(self.epoch):
             self.predict = self.forward()
-            loss = self.MSE(self.computeError(self.predict, self.labels))
-            derivative_MSE = self.derivative_MSE(self.computeError(self.predict, self.labels))
+            loss = self.MSE(self.compute_error(self.predict, self.labels))
+            derivative_MSE = self.derivative_MSE(self.compute_error(self.predict, self.labels))
             self.backward(derivative_MSE)
             self.update_weight()
 
@@ -259,7 +259,7 @@ class NNetwork:
 
 
 def main():
-    args = parseArguments()
+    args = parse_arguments()
     data_type = int(args.data_type)
     activation_function = args.activation_function
     learning_rate = float(args.learning_rate)
