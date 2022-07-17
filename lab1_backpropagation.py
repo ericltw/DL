@@ -6,6 +6,9 @@ import numpy as np
 def parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_type')
+    parser.add_argument('--activation_function', default='sigmoid')
+    parser.add_argument('--learning_rate', default=0.025)
+    parser.add_argument('--num_of_hidden_neurals', default=4)
 
     return parser.parse_args()
 
@@ -52,9 +55,10 @@ class Layer:
     def initWeight(self):
         return np.random.uniform(0, 1, (self.num_of_neurals, self.num_of_next_layer_neurals))
 
-    def __init__(self, num_of_neurals, num_of_next_layer_neurals, learning_rate=0.025):
+    def __init__(self, num_of_neurals, num_of_next_layer_neurals, activation_function, learning_rate):
         self.num_of_neurals = num_of_neurals
         self.num_of_next_layer_neurals = num_of_next_layer_neurals
+        self.activation_function = activation_function
         self.learning_rate = learning_rate
         self.weight = self.initWeight()
         self.forward_output = []
@@ -70,15 +74,34 @@ class Layer:
         result = np.multiply(x, 1.0 - x)
         return result
 
+    @staticmethod
+    def relu(x):
+        return np.maximum(0.0, x)
+
+    @staticmethod
+    def derivative_relu(x):
+        return np.heaviside(x, 0.0)
+
     def forward(self, inputs):
         self.forward_gradient = inputs
-        self.forward_output = self.sigmoid(np.dot(inputs, self.weight))
+
+        if self.activation_function == 'sigmoid':
+            self.forward_output = self.sigmoid(np.dot(inputs, self.weight))
+        elif self.activation_function == 'relu':
+            self.forward_output = self.relu(np.dot(inputs, self.weight))
+        elif self.activation_function == 'none':
+            self.forward_output = np.dot(inputs, self.weight)
 
         return self.forward_output
 
     def backward(self, derivative_loss):
         # Compute ∂C/∂Z'
-        self.backward_gradient = derivative_loss * self.derivative_sigmoid(self.forward_output)
+        if self.activation_function == 'sigmoid':
+            self.backward_gradient = derivative_loss * self.derivative_sigmoid(self.forward_output)
+        elif self.activation_function == 'relu':
+            self.backward_gradient = derivative_loss * self.derivative_relu(self.forward_output)
+        elif self.activation_function == 'none':
+            self.backward_gradient = derivative_loss
 
         # return w5*(∂C/∂Za) + w6*(∂X/∂Zb) + ...
         return np.dot(self.backward_gradient, self.weight.T)
@@ -93,21 +116,27 @@ class Layer:
 class NNetwork:
     def initLayers(self):
         # Init input layers.
-        layers = [Layer(self.num_of_input_neurals, self.num_of_hidden_neurals)]
+        layers = [Layer(self.num_of_input_neurals, self.num_of_hidden_neurals, self.activation_function,
+                        self.learning_rate)]
 
         # Init hidden layers.
         for _ in range(self.num_of_hidden_layers - 1):
-            layers.append(Layer(self.num_of_hidden_neurals, self.num_of_hidden_neurals))
+            layers.append(
+                Layer(self.num_of_hidden_neurals, self.num_of_hidden_neurals, self.activation_function,
+                      self.learning_rate))
 
         # Init output layers.
-        layers.append(Layer(self.num_of_hidden_neurals, self.num_of_output_neurals))
+        layers.append(Layer(self.num_of_hidden_neurals, self.num_of_output_neurals, 'sigmoid',
+                            self.learning_rate))
 
         return layers
 
-    def __init__(self, inputs, labels, num_of_hidden_layers=2, num_of_input_neurals=2, num_of_hidden_neurals=4,
-                 num_of_output_neurals=1, epoch=1000000):
+    def __init__(self, inputs, labels, activation_function, learning_rate, num_of_hidden_layers=2,
+                 num_of_input_neurals=2, num_of_hidden_neurals=4, num_of_output_neurals=1, epoch=100000):
         self.inputs = inputs
         self.labels = labels
+        self.activation_function = activation_function
+        self.learning_rate = learning_rate
         self.num_of_hidden_layers = num_of_hidden_layers
         # The number of neurals of input, hidden, and output layer.
         self.num_of_input_neurals = num_of_input_neurals
@@ -152,6 +181,54 @@ class NNetwork:
         for layer in self.layers:
             layer.update()
 
+    def verify_prediction(self):
+        for i, predict_val in enumerate(self.predict):
+            predict_result = 1 if predict_val[0] >= 0.5 else 0
+
+            if predict_result != self.labels[i]:
+                return False
+
+        return True
+
+    def train(self):
+        losses = []
+
+        for i in range(self.epoch):
+            self.predict = self.forward()
+            loss = self.MSE(self.computeError(self.predict, self.labels))
+            derivative_MSE = self.derivative_MSE(self.computeError(self.predict, self.labels))
+            self.backward(derivative_MSE)
+            self.update_weight()
+
+            print(f'epoch: {i + 1} loss: {loss}')
+            self.losses.append(loss)
+            if self.verify_prediction():
+                break
+
+    def print_prediction(self):
+        print('##### Prediction')
+        for predict_val in self.predict:
+            print(f'{float(predict_val):.10f}')
+
+    def get_accuracy(self):
+        correct = 0
+        for i, predict_val in enumerate(self.predict):
+            predict_result = 1 if predict_val[0] >= 0.5 else 0
+            if predict_result == self.labels[i]:
+                correct += 1
+
+        return correct / len(self.labels)
+
+    def print_statistics(self):
+        print('##### Statistics')
+        print(f'Number of hidden layers: {self.num_of_hidden_layers}')
+        print(f'Number of input neurals: {self.num_of_input_neurals}')
+        print(f'Number of hidden neurals: {self.num_of_hidden_neurals}')
+        print(f'Number of output neurals: {self.num_of_output_neurals}')
+        print(f'Activation function: {self.activation_function}')
+        print(f'Learning rate: {self.learning_rate}')
+        print(f'Accuracy: {self.get_accuracy()}')
+
     @staticmethod
     def draw_result(x, y, pred_y, losses):
         plt.subplot(1, 3, 1)
@@ -177,32 +254,21 @@ class NNetwork:
         plt.show()
 
     def show_result(self):
+        self.print_prediction()
+        self.print_statistics()
         self.draw_result(self.inputs, self.labels, self.predict, self.losses)
-        plt.show()
-
-    def train(self):
-        losses = []
-
-        for i in range(self.epoch):
-            self.predict = self.forward()
-            loss = self.MSE(self.computeError(self.predict, self.labels))
-            derivative_MSE = self.derivative_MSE(self.computeError(self.predict, self.labels))
-            self.backward(derivative_MSE)
-            self.update_weight()
-
-            print(f'epoch: {i + 1} loss: {loss}')
-            self.losses.append(loss)
-            if loss < 1e-4:
-                break
 
 
 def main():
     args = parseArguments()
     data_type = int(args.data_type)
+    activation_function = args.activation_function
+    learning_rate = float(args.learning_rate)
+    num_of_hidden_neurals = int(args.num_of_hidden_neurals)
 
     inputs, labels = generate_data(data_type)
 
-    network = NNetwork(inputs, labels)
+    network = NNetwork(inputs, labels, activation_function, learning_rate, num_of_hidden_neurals=num_of_hidden_neurals)
     network.train()
     network.show_result()
 
