@@ -50,20 +50,30 @@ class EEGNet(nn.Module):
     def __init__(self, activation_function: nn.modules.activation):
         super().__init__()
 
+        # nn.Sequential is sequential model container. The forward() method of Sequential accepts any input and
+        # forwards it to the first module it contains. It then “chains” outputs to inputs sequentially for each
+        # subsequent module, finally returning the output of the last module.
         self.first_conv = nn.Sequential(
             nn.Conv2d(
                 in_channels=1,
                 out_channels=16,
                 kernel_size=(1, 51),
+                # TODO: Why the stride is (1, 1)?
                 stride=(1, 1),
                 padding=(0, 25),
                 bias=False,
             ),
             nn.BatchNorm2d(
-                16,
+                # C from an expected input of size (N, C, H, W).
+                num_features=16,
+                # A value added to the denominator for numerical stability.
                 eps=1e-05,
+                # The value used for the running_mean and running_var computation.
                 momentum=0.1,
+                # A boolean value that when set to True, this module has learnable affine parameters.
                 affine=True,
+                # A boolean value that when set to True, this module tracks the running mean and variance,
+                # and when set to False, this module does not track such statistics.
                 track_running_stats=True,
             )
         )
@@ -74,11 +84,13 @@ class EEGNet(nn.Module):
                 out_channels=32,
                 kernel_size=(2, 1),
                 stride=(1, 1),
+                # Number of blocked connections from input channels to output channels.
+                # Reference: https://blog.csdn.net/monsterhoho/article/details/80173400
                 groups=16,
                 bias=False,
             ),
             nn.BatchNorm2d(
-                32,
+                num_features=32,
                 eps=1e-05,
                 momentum=0.1,
                 affine=True,
@@ -88,9 +100,15 @@ class EEGNet(nn.Module):
             nn.AvgPool2d(
                 kernel_size=(1, 4),
                 stride=(1, 4),
-                padding=0
+                padding=0,
             ),
-            nn.Dropout(p=0.25)
+            # During training, randomly zeroes some of the elements of the input tensor with probability p using
+            # samples from a Bernoulli distribution.
+            # The objective is avoiding overfitting to some channel data.
+            nn.Dropout(
+                # probability of an element to be zeroed.
+                p=0.25,
+            )
         )
 
         self.separable_conv = nn.Sequential(
@@ -103,7 +121,7 @@ class EEGNet(nn.Module):
                 bias=False,
             ),
             nn.BatchNorm2d(
-                32,
+                num_features=32,
                 eps=1e-05,
                 momentum=0.1,
                 affine=True,
@@ -119,7 +137,9 @@ class EEGNet(nn.Module):
         )
 
         self.classify = nn.Sequential(
+            # Flattens a contiguous range of dims into a tensor.
             nn.Flatten(),
+            # Applies a linear transformation to the incoming data.
             nn.Linear(
                 in_features=736,
                 out_features=2,
@@ -300,8 +320,13 @@ def train(model, batch_size, learning_rate, epochs, device, train_dataset, test_
 
                     # Compute the total number of right predictions for this batch.
                     accuracy['test'][model_name][epoch] += (torch.max(predict_labels, 1)[1] == labels).sum().item()
+
+                    # Save model.
+                    # if accuracy['test'][model_name][epoch] / len(test_dataset) > 0.87:
+                    #     torch.save(model.state_dict(), f'{model_name}_batch_size_{batch_size}_lr_{learning_rate}_epoch_'
+                    #                                    f'{epochs}.pt')
                 # Compute the accuracy for this epoch.
-                accuracy['test'][model_name][epoch] = 100.0 * accuracy['test'][model_name][epoch] / len(train_dataset)
+                accuracy['test'][model_name][epoch] = 100.0 * accuracy['test'][model_name][epoch] / len(test_dataset)
 
         print()
         torch.cuda.empty_cache()
