@@ -58,7 +58,6 @@ class EEGNet(nn.Module):
                 in_channels=1,
                 out_channels=16,
                 kernel_size=(1, 51),
-                # TODO: Why the stride is (1, 1)?
                 stride=(1, 1),
                 padding=(0, 25),
                 bias=False,
@@ -179,7 +178,7 @@ class DeepConvNet(nn.Module):
                 bias=True
             ),
             nn.BatchNorm2d(
-                self.deepconv[0]
+                num_features=self.deepconv[0]
             ),
             activation_function(),
             nn.MaxPool2d(
@@ -201,7 +200,7 @@ class DeepConvNet(nn.Module):
                     bias=True
                 ),
                 nn.BatchNorm2d(
-                    self.deepconv[index]
+                    num_features=self.deepconv[index]
                 ),
                 activation_function(),
                 nn.MaxPool2d(
@@ -212,10 +211,13 @@ class DeepConvNet(nn.Module):
                 )
             ))
 
-        flatten_size = self.deepconv[-1] * reduce(
-            lambda x, _: round((x - 4) / 2), self.deepconv, 750)
+        flatten_size = self.deepconv[-1] * reduce(lambda x, _: round((x - 4) / 2), self.deepconv, 750)
         self.classify = nn.Sequential(
-            nn.Linear(flatten_size, 2, bias=True),
+            nn.Linear(
+                in_features=flatten_size,
+                out_features=2,
+                bias=True,
+            ),
         )
 
     def forward(self, inputs: TensorDataset):
