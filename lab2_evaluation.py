@@ -14,7 +14,7 @@ def parse_argument():
 
 
 def evaluate(file_name, device, train_dataset, test_dataset):
-    model = EEGNet(nn.LeakyReLU).to(device)
+    model = EEGNet(nn.ReLU).to(device)
     model.load_state_dict(torch.load(file_name))
 
     # Init accuracy data structure for recording accuracy data.
@@ -61,7 +61,7 @@ def evaluate(file_name, device, train_dataset, test_dataset):
         # Compute the accuracy for this epoch.
         accuracy['test'] = 100.0 * accuracy['test'] / len(test_dataset)
 
-    print('Model: EEG_LeakyReLU')
+    print('Model: EEG_ReLU')
     print(f'Train accuracy: {accuracy["train"]}%')
     print(f'Test accuracy: {accuracy["test"]}%')
 
