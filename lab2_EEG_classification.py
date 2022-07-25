@@ -249,8 +249,8 @@ def show_result(model, epochs, accuracy, model_names):
     plt.show()
 
 
-def train(model, batch_size, learning_rate, epochs, device, train_dataset, test_dataset):
-    if model == 'EEG':
+def train(model_setting, batch_size, learning_rate, epochs, device, train_dataset, test_dataset):
+    if model_setting == 'EEG':
         models = {
             'EEG_ReLU': EEGNet(nn.ReLU).to(device),
             'EEG_LeakyReLU': EEGNet(nn.LeakyReLU).to(device),
@@ -264,7 +264,7 @@ def train(model, batch_size, learning_rate, epochs, device, train_dataset, test_
         }
 
     # Init accuracy data structure for recording accuracy data.
-    model_names = [f'{model}_ReLU', f'{model}_LeakyReLU', f'{model}_ELU']
+    model_names = [f'{model_setting}_ReLU', f'{model_setting}_LeakyReLU', f'{model_setting}_ELU']
     accuracy = {
         'train': {model_name: [0 for _ in range(epochs)] for model_name in model_names},
         'test': {model_name: [0 for _ in range(epochs)] for model_name in model_names}
@@ -333,7 +333,7 @@ def train(model, batch_size, learning_rate, epochs, device, train_dataset, test_
         print()
         torch.cuda.empty_cache()
 
-    show_result(model, epochs, accuracy, model_names)
+    show_result(model_setting, epochs, accuracy, model_names)
 
 
 def main():
