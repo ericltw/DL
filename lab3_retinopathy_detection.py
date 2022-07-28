@@ -403,8 +403,8 @@ def train(target_model, batch_size, learning_rate, epochs, momentum, weight_deca
     # Init model_names, models and data structure of accuracy.
     if target_model == 'ResNet18':
         model_names = [
-            'ResNet18 (w/o pretraining)',
-            'ResNet18 (w/ pretraining)'
+            'ResNet18(wo_pretraining)',
+            'ResNet18(w_pretraining)'
         ]
         models = {
             model_names[0]: resnet_18().to(device),
@@ -412,8 +412,8 @@ def train(target_model, batch_size, learning_rate, epochs, momentum, weight_deca
         }
     else:
         model_names = [
-            'ResNet50 (w/o pretraining)',
-            'ResNet50 (w/ pretraining)'
+            'ResNet50(wo_pretraining)',
+            'ResNet50(w_pretraining)'
         ]
         models = {
             model_names[0]: resnet_50().to(device),
@@ -499,8 +499,9 @@ def train(target_model, batch_size, learning_rate, epochs, momentum, weight_deca
 
                 # Save model.
                 if accuracy['test'][model_name][epoch] > 80:
-                    torch.save(model.state_dict(), f'{model_name}_batch_size_{batch_size}_lr_{learning_rate}_epoch_'
-                                                   f'{epochs}_momentum_{momentum}_weight_decay_{weight_decay}.pt')
+                    torch.save(model.state_dict(), f'C:/Users/user/Documents/Course/DL/{model_name}_batch_size_'
+                                                   f'{batch_size}_lr_{learning_rate}_epoch_{epochs}_momentum_'
+                                                   f'{momentum}_weight_decay_{weight_decay}.pt')
     # Show results.
     show_results(target_model, epochs, accuracy, prediction, ground_truth, model_names)
 
