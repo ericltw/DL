@@ -61,12 +61,12 @@ def main():
 
     # Dataloader
     train_dataloader = DataLoader(
-        iclevrDataset(mode='train', root='iclevr'),
+        iclevrDataset(mode='train', root='./lab5_data/iclevr'),
         batch_size=args.batch_size,
         shuffle=True
     )
     test_dataloader = DataLoader(
-        iclevrDataset(mode='test', root='iclevr'),
+        iclevrDataset(mode='test', root='./lab5_data/iclevr'),
         batch_size=args.batch_size,
         shuffle=False
     )

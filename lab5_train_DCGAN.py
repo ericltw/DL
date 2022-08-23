@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument("--sample_interval", type=int, default=400, help="interval between image sampling")
     parser.add_argument('--outf', default='checkpoints', help='folder to output images and model checkpoints')
     parser.add_argument('--dry-run', action='store_true', help='check a single training cycle works')
-    parser.add_argument('--log', default='logs/', help='path to tensorboard log')
+    parser.add_argument('--log', default='logs/', help='path to tensorbBCELOSSoard log')
     parser.add_argument('--resume', default='', help='path to resume model weight')
     return parser.parse_args()
 
@@ -58,12 +58,12 @@ def main():
 
     # Dataloader
     train_dataloader = DataLoader(
-        iclevrDataset(mode='train', root='iclevr'),
+        iclevrDataset(mode='train', root='./lab5_data/iclevr'),
         batch_size=args.batch_size,
         shuffle=True
     )
     test_dataloader = DataLoader(
-        iclevrDataset(mode='test', root='iclevr'),
+        iclevrDataset(mode='test', root='./lab5_data/iclevr'),
         batch_size=args.batch_size,
         shuffle=False
     )
